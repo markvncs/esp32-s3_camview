@@ -2,9 +2,11 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "driver/gpio.h"
 
 #include "camera_module.h"
 #include "display_module.h"
+#include "tracker_module.h"
 
 static const char *TAG = "MAIN";
 
@@ -12,7 +14,10 @@ void app_main(void)
 {
     vTaskDelay(pdMS_TO_TICKS(3000));
 
+    gpio_install_isr_service(0);
+
     init_display();
+    init_tracker();
 
     if (init_camera() != ESP_OK) {
         ESP_LOGE(TAG, "Camera failed");
