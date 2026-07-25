@@ -3,7 +3,7 @@
 
 #include "driver/gpio.h"
 
-volatile bool tracker_detected;
+extern volatile bool tracker_detected;
 void init_tracker(void);
 
 #endif

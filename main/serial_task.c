@@ -23,8 +23,25 @@ static void photo_processing_task(void *pvParameters) {
 
                     if (converted && jpg_buf != NULL) {
                         ESP_LOGI(TAG, "Sucessfully converted to JPEG: %u bytes", jpg_len);
+                        
+                        vTaskDelay(pdMS_TO_TICKS(50));
 
-                        uart_write_bytes(UART_NUM_0, (const char *)jpg_buf, jpg_len);
+                        char header[64];
+                        int h_len = snprintf(header, sizeof(header), "\r\n--IMG_START:%u--\r\n", jpg_len);
+                        
+                        fwrite(header, 1, h_len, stdout);
+                        fflush(stdout); 
+                        
+                        vTaskDelay(pdMS_TO_TICKS(50));
+
+                        fwrite(jpg_buf, 1, jpg_len, stdout);
+                        fflush(stdout);
+                        
+                        vTaskDelay(pdMS_TO_TICKS(50));
+
+                        char footer[] = "\r\n--IMG_END--\r\n";
+                        fwrite(footer, 1, sizeof(footer)-1, stdout);
+                        fflush(stdout);
 
                         free(jpg_buf);
                     } else {
