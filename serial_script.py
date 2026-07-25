@@ -2,6 +2,7 @@ import serial
 import re
 import time
 import os
+import base64
 
 PORTA = 'COM7'
 BAUD_RATE = 115200
@@ -14,7 +15,7 @@ def main():
 
     try:
         ser = serial.Serial(PORTA, BAUD_RATE, timeout=1)
-        print(f"Escutando a porta {PORTA}...")
+        print(f"listening {PORTA}...")
         
         while True:
             linha = ser.readline()
@@ -31,26 +32,30 @@ def main():
             match = re.search(r'--IMG_START:(\d+)--', texto)
             if match:
                 tamanho_imagem = int(match.group(1))
-                print(f"\n[ ALERTA ] Baixando imagem de {tamanho_imagem} bytes...")
+                print(f"\n[ alert ] downloading image {tamanho_imagem} bytes...")
                 
                 imagem_bytes = ser.read(tamanho_imagem)
                 
                 if len(imagem_bytes) == tamanho_imagem:
-                    nome_arquivo = f"captura_{int(time.time())}.jpg"
-
-                    caminho_completo = os.path.join(FOLDER, nome_arquivo)
-                    
-                    with open(caminho_completo, "wb") as f:
-                        f.write(imagem_bytes)
+                    try:
+                        jpeg_limpo = base64.b64decode(imagem_bytes)
                         
-                    print(f"[ SUCESSO ] Imagem salva como: {nome_arquivo}\n")
+                        nome_arquivo = f"captura_{int(time.time())}.jpg"
+                        caminho_completo = os.path.join(FOLDER, nome_arquivo)
+                        
+                        with open(caminho_completo, "wb") as f:
+                            f.write(jpeg_limpo)
+                            
+                        print(f"[ success ] imaged saved in: {caminho_completo}\n")
+                    except Exception as e:
+                        print(f"[ error ] failed to decode image: {e}")
                 else:
-                    print(f"[ ERRO ] Faltaram bytes. Recebidos {len(imagem_bytes)} de {tamanho_imagem}")
+                    print(f"[ error ] missing bytes. received {len(imagem_bytes)} from {tamanho_imagem}")
 
     except serial.SerialException as e:
-        print(f"Erro na porta serial: {e}")
+        print(f"error at serial port: {e}")
     except KeyboardInterrupt:
-        print("\nSaindo...")
+        print("\nleaving...")
         ser.close()
 
 if __name__ == '__main__':
